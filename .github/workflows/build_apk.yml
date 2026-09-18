@@ -7,9 +7,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ----------------------------------------------------
-  # JOB 1: Build Trainer Mobile App
-  # ----------------------------------------------------
   build-trainer-app:
     runs-on: ubuntu-latest
     steps:
@@ -28,85 +25,18 @@ jobs:
           flutter-version: '3.19.x'
           channel: 'stable'
 
-      # Step 1: Re-create missing Android folder automatically
-      - name: Re-create Android Project
-        run: |
-          cd mobile_apps/dog_trainer_app
-          flutter create . --platforms=android --org com.dogtraining.trainer
-
-      # Step 2: Inject AndroidManifest & Kotlin V2 Activity
-      - name: Inject AndroidManifest & Kotlin V2 Embedding
-        run: |
-          mkdir -p mobile_apps/dog_trainer_app/android/app/src/main/kotlin/com/dogtraining/trainer
-          
-          cat << 'EOF' > mobile_apps/dog_trainer_app/android/app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-              package="com.dogtraining.trainer">
-
-              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-              <uses-permission android:name="android.permission.CAMERA" />
-              <uses-permission android:name="android.permission.INTERNET" />
-
-              <application
-                  android:label="Dog Trainer App"
-                  android:name="${applicationName}"
-                  android:icon="@mipmap/ic_launcher">
-                  
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true"
-                      android:launchMode="singleTop"
-                      android:theme="@style/LaunchTheme"
-                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-                      android:hardwareAccelerated="true"
-                      android:windowSoftInputMode="adjustResize">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-                  </activity>
-
-                  <meta-data
-                      android:name="flutterEmbedding"
-                      android:value="2" />
-              </application>
-          </manifest>
-          EOF
-
-          cat << 'EOF' > mobile_apps/dog_trainer_app/android/app/src/main/kotlin/com/dogtraining/trainer/MainActivity.kt
-          package com.dogtraining.trainer
-
-          import io.flutter.embedding.android.FlutterActivity
-
-          class MainActivity: FlutterActivity() {
-          }
-          EOF
-
-      # Step 3: Fix Kotlin Version Mismatch (1.9.10) & MinSDK (21)
-      - name: Configure Gradle & Kotlin Version
-        run: |
-          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.10"/g' mobile_apps/dog_trainer_app/android/build.gradle
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' mobile_apps/dog_trainer_app/android/app/build.gradle
-          sed -i 's/minSdkVersion 19/minSdkVersion 21/g' mobile_apps/dog_trainer_app/android/app/build.gradle
-
-      # Step 4: Install Dependencies & Build APK
       - name: Build Trainer APK
         run: |
           cd mobile_apps/dog_trainer_app
           flutter pub get
           flutter build apk --release --no-tree-shake-icons
 
-      # Step 5: Upload APK Artifact
       - name: Upload Trainer APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: trainer-app-release
           path: mobile_apps/dog_trainer_app/build/app/outputs/flutter-apk/app-release.apk
 
-  # ----------------------------------------------------
-  # JOB 2: Build Client Mobile App
-  # ----------------------------------------------------
   build-client-app:
     runs-on: ubuntu-latest
     steps:
@@ -124,62 +54,6 @@ jobs:
         with:
           flutter-version: '3.19.x'
           channel: 'stable'
-
-      - name: Re-create Android Project
-        run: |
-          cd mobile_apps/dog_client_app
-          flutter create . --platforms=android --org com.dogtraining.client
-
-      - name: Inject AndroidManifest & Kotlin V2 Embedding
-        run: |
-          mkdir -p mobile_apps/dog_client_app/android/app/src/main/kotlin/com/dogtraining/client
-          
-          cat << 'EOF' > mobile_apps/dog_client_app/android/app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-              package="com.dogtraining.client">
-
-              <uses-permission android:name="android.permission.INTERNET" />
-
-              <application
-                  android:label="Dog Client App"
-                  android:name="${applicationName}"
-                  android:icon="@mipmap/ic_launcher">
-                  
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true"
-                      android:launchMode="singleTop"
-                      android:theme="@style/LaunchTheme"
-                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-                      android:hardwareAccelerated="true"
-                      android:windowSoftInputMode="adjustResize">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-                  </activity>
-
-                  <meta-data
-                      android:name="flutterEmbedding"
-                      android:value="2" />
-              </application>
-          </manifest>
-          EOF
-
-          cat << 'EOF' > mobile_apps/dog_client_app/android/app/src/main/kotlin/com/dogtraining/client/MainActivity.kt
-          package com.dogtraining.client
-
-          import io.flutter.embedding.android.FlutterActivity
-
-          class MainActivity: FlutterActivity() {
-          }
-          EOF
-
-      - name: Configure Gradle & Kotlin Version
-        run: |
-          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.10"/g' mobile_apps/dog_client_app/android/build.gradle
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' mobile_apps/dog_client_app/android/app/build.gradle
-          sed -i 's/minSdkVersion 19/minSdkVersion 21/g' mobile_apps/dog_client_app/android/app/build.gradle
 
       - name: Build Client APK
         run: |
