@@ -26,15 +26,18 @@ jobs:
           flutter-version: '3.19.x'
           channel: 'stable'
 
-      # Step 1: Generate missing Android project structure
+      # Step 1: Re-create Android files
       - name: Re-create Android Project Structure
         run: |
           cd mobile_apps/dog_trainer_app
           flutter create . --platforms=android --org com.dogtraining.app
 
-      # Step 2: Inject valid AndroidManifest with permissions & V2 Embedding
-      - name: Inject Valid AndroidManifest
+      # Step 2: Inject Android Embedding V2 & Permissions BEFORE pub get
+      - name: Inject AndroidManifest & Kotlin V2 Embedding
         run: |
+          mkdir -p mobile_apps/dog_trainer_app/android/app/src/main/kotlin/com/dogtraining/app
+          
+          # 1. Create AndroidManifest.xml with Embedding V2 Tag
           cat << 'EOF' > mobile_apps/dog_trainer_app/android/app/src/main/AndroidManifest.xml
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
               package="com.dogtraining.app">
@@ -46,7 +49,7 @@ jobs:
 
               <application
                   android:label="Dog Trainer App"
-                  android:name="io.flutter.app.FlutterApplication"
+                  android:name="${applicationName}"
                   android:icon="@mipmap/ic_launcher">
                   
                   <activity
@@ -70,13 +73,23 @@ jobs:
           </manifest>
           EOF
 
-      # Step 3: Upgrade minSdkVersion to 21 for camera & location plugins
+          # 2. Create MainActivity.kt for V2 Embedding
+          cat << 'EOF' > mobile_apps/dog_trainer_app/android/app/src/main/kotlin/com/dogtraining/app/MainActivity.kt
+          package com.dogtraining.app
+
+          import io.flutter.embedding.android.FlutterActivity
+
+          class MainActivity: FlutterActivity() {
+          }
+          EOF
+
+      # Step 3: Upgrade minSdkVersion to 21 for Camera & Location
       - name: Update Gradle MinSDK
         run: |
           sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' mobile_apps/dog_trainer_app/android/app/build.gradle
           sed -i 's/minSdkVersion 19/minSdkVersion 21/g' mobile_apps/dog_trainer_app/android/app/build.gradle
 
-      # Step 4: Install Flutter Dependencies
+      # Step 4: Install Dependencies (After V2 injection)
       - name: Install Dependencies
         run: |
           cd mobile_apps/dog_trainer_app
