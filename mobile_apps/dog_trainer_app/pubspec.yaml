@@ -1,5 +1,5 @@
 name: dog_trainer_app
-description: "Trainer & Client Mobile App for Dog Training Management"
+description: "Dog Trainer Mobile Application"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -11,8 +11,8 @@ dependencies:
     sdk: flutter
   http: ^1.2.0
   geolocator: ^11.0.0
-  camera: ^0.10.5+9
-  cupertino_icons: ^1.0.6
+  camera: ^0.10.5
+  cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
@@ -21,3 +21,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  
