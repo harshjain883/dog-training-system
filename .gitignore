@@ -1,0 +1,20 @@
+# Node dependencies & environment
+node_modules/
+.env
+
+# Flutter & Dart Build Cache
+.dart_tool/
+.pub-cache/
+.pub/
+build/
+
+# Ignore Auto-Generated Native Android/iOS Folders (Handled by GitHub Actions)
+mobile_apps/dog_trainer_app/android/
+mobile_apps/dog_client_app/android/
+mobile_apps/dog_trainer_app/ios/
+mobile_apps/dog_client_app/ios/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
