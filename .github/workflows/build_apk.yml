@@ -26,6 +26,57 @@ jobs:
           flutter-version: '3.19.x'
           channel: 'stable'
 
+      # Fix: Regenerate full Android structure with V2 embedding
+      - name: Re-create Android Project Structure
+        run: |
+          cd mobile_apps/dog_trainer_app
+          flutter create . --platforms=android --org com.dogtraining.app
+
+      # Fix: Configure V2 embedding & permissions in AndroidManifest.xml
+      - name: Inject Android Permissions & V2 Embedding
+        run: |
+          mkdir -p mobile_apps/dog_trainer_app/android/app/src/main
+          cat << 'EOF' > mobile_apps/dog_trainer_app/android/app/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              package="com.dogtraining.app">
+
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+              <uses-permission android:name="android.permission.CAMERA" />
+              <uses-permission android:name="android.permission.INTERNET" />
+
+              <application
+                  android:label="Dog Trainer App"
+                  android:name="\${applicationName}"
+                  android:icon="@mipmap/ic_launcher">
+                  
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:launchMode="singleTop"
+                      android:theme="@style/LaunchTheme"
+                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+                      android:hardwareAccelerated="true"
+                      android:windowSoftInputMode="adjustResize">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+
+                  <meta-data
+                      android:name="flutterEmbedding"
+                      android:value="2" />
+              </application>
+          </manifest>
+          EOF
+
+      # Fix: Set minSdkVersion to 21 for camera & geolocator
+      - name: Update Gradle MinSDK
+        run: |
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' mobile_apps/dog_trainer_app/android/app/build.gradle
+          sed -i 's/minSdkVersion 19/minSdkVersion 21/g' mobile_apps/dog_trainer_app/android/app/build.gradle
+
       - name: Install Dependencies
         run: |
           cd mobile_apps/dog_trainer_app
@@ -41,3 +92,4 @@ jobs:
         with:
           name: dog-trainer-app-release
           path: mobile_apps/dog_trainer_app/build/app/outputs/flutter-apk/app-release.apk
+          
