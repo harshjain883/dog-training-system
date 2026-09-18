@@ -26,16 +26,15 @@ jobs:
           flutter-version: '3.19.x'
           channel: 'stable'
 
-      # Fix: Regenerate full Android structure with V2 embedding
+      # Step 1: Generate missing Android project structure
       - name: Re-create Android Project Structure
         run: |
           cd mobile_apps/dog_trainer_app
           flutter create . --platforms=android --org com.dogtraining.app
 
-      # Fix: Configure V2 embedding & permissions in AndroidManifest.xml
-      - name: Inject Android Permissions & V2 Embedding
+      # Step 2: Inject valid AndroidManifest with permissions & V2 Embedding
+      - name: Inject Valid AndroidManifest
         run: |
-          mkdir -p mobile_apps/dog_trainer_app/android/app/src/main
           cat << 'EOF' > mobile_apps/dog_trainer_app/android/app/src/main/AndroidManifest.xml
           <manifest xmlns:android="http://schemas.android.com/apk/res/android"
               package="com.dogtraining.app">
@@ -47,7 +46,7 @@ jobs:
 
               <application
                   android:label="Dog Trainer App"
-                  android:name="\${applicationName}"
+                  android:name="io.flutter.app.FlutterApplication"
                   android:icon="@mipmap/ic_launcher">
                   
                   <activity
@@ -71,22 +70,25 @@ jobs:
           </manifest>
           EOF
 
-      # Fix: Set minSdkVersion to 21 for camera & geolocator
+      # Step 3: Upgrade minSdkVersion to 21 for camera & location plugins
       - name: Update Gradle MinSDK
         run: |
           sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' mobile_apps/dog_trainer_app/android/app/build.gradle
           sed -i 's/minSdkVersion 19/minSdkVersion 21/g' mobile_apps/dog_trainer_app/android/app/build.gradle
 
+      # Step 4: Install Flutter Dependencies
       - name: Install Dependencies
         run: |
           cd mobile_apps/dog_trainer_app
           flutter pub get
 
+      # Step 5: Build Final Release APK
       - name: Build APK
         run: |
           cd mobile_apps/dog_trainer_app
           flutter build apk --release --no-tree-shake-icons
 
+      # Step 6: Upload APK to Github Artifacts
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
