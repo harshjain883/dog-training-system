@@ -10,59 +10,80 @@ jobs:
   build-trainer-app:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Set up Java
-        uses: actions/setup-java@v3
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: '17'
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+          
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.19.x'
           channel: 'stable'
 
-      - name: Build Trainer APK
+      # Step 1: Re-create Android Project
+      - name: Re-create Android Project Structure
+        run: |
+          cd mobile_apps/dog_trainer_app
+          flutter create . --platforms=android --org com.dogtraining.trainer
+
+      # Step 2: Fix Gradle Wrapper Version to 8.0 (Fixes minimum Gradle 8.0 error)
+      - name: Upgrade Gradle Wrapper to 8.0
+        run: |
+          mkdir -p mobile_apps/dog_trainer_app/android/gradle/wrapper
+          cat << 'EOF' > mobile_apps/dog_trainer_app/android/gradle/wrapper/gradle-wrapper.properties
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.0-all.zip
+          EOF
+
+      # Step 3: Inject AndroidManifest & V2 Embedding
+      - name: Inject AndroidManifest & V2 Embedding
+        run: |
+          mkdir -p mobile_apps/dog_trainer_app/android/app/src/main/kotlin/com/dogtraining/trainer
+          cat << 'EOF' > mobile_apps/dog_trainer_app/android/app/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.dogtraining.trainer">
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+              <uses-permission android:name="android.permission.CAMERA" />
+              <uses-permission android:name="android.permission.INTERNET" />
+              <application android:label="Dog Trainer App" android:name="${applicationName}" android:icon="@mipmap/ic_launcher">
+                  <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop" android:theme="@style/LaunchTheme" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode" android:hardwareAccelerated="true" android:windowSoftInputMode="adjustResize">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+                  <meta-data android:name="flutterEmbedding" android:value="2" />
+              </application>
+          </manifest>
+          EOF
+
+          cat << 'EOF' > mobile_apps/dog_trainer_app/android/app/src/main/kotlin/com/dogtraining/trainer/MainActivity.kt
+          package com.dogtraining.trainer
+          import io.flutter.embedding.android.FlutterActivity
+          class MainActivity: FlutterActivity() {}
+          EOF
+
+      # Step 4: Update minSdkVersion to 21
+      - name: Update Gradle MinSDK
+        run: |
+          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' mobile_apps/dog_trainer_app/android/app/build.gradle
+          sed -i 's/minSdkVersion 19/minSdkVersion 21/g' mobile_apps/dog_trainer_app/android/app/build.gradle
+
+      # Step 5: Install & Build APK
+      - name: Install & Build Trainer APK
         run: |
           cd mobile_apps/dog_trainer_app
           flutter pub get
           flutter build apk --release --no-tree-shake-icons
 
+      # Step 6: Upload Artifact
       - name: Upload Trainer APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: trainer-app-release
           path: mobile_apps/dog_trainer_app/build/app/outputs/flutter-apk/app-release.apk
-
-  build-client-app:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Set up Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.19.x'
-          channel: 'stable'
-
-      - name: Build Client APK
-        run: |
-          cd mobile_apps/dog_client_app
-          flutter pub get
-          flutter build apk --release --no-tree-shake-icons
-
-      - name: Upload Client APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: client-app-release
-          path: mobile_apps/dog_client_app/build/app/outputs/flutter-apk/app-release.apk
