@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Training Admin Portal</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #333; margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-top: 12px; }
+        input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; margin-top: 20px; cursor: pointer; }
+        button:hover { background: #218838; }
+        #msg { margin-top: 15px; padding: 10px; border-radius: 5px; display: none; text-align: center; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>User Registration Portal</h2>
+    <form id="regForm">
+        <label>Username</label>
+        <input type="text" id="username" placeholder="e.g. love83" required>
+
+        <label>Email</label>
+        <input type="email" id="email" placeholder="e.g. love83@gmail.com" required>
+
+        <label>Password</label>
+        <input type="password" id="password" placeholder="e.g. 123456" required>
+
+        <label>Account Role</label>
+        <select id="role">
+            <option value="TRAINER">TRAINER</option>
+            <option value="CLIENT">CLIENT</option>
+        </select>
+
+        <button type="submit">Create User Account</button>
+    </form>
+    <div id="msg"></div>
+</div>
+
+<script>
+    document.getElementById('regForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const msgDiv = document.getElementById('msg');
+        msgDiv.style.display = 'none';
+
+        const payload = {
+            username: document.getElementById('username').value,
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+            role: document.getElementById('role').value
+        };
+
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (res.ok || data.success) {
+                msgDiv.className = 'success';
+                msgDiv.innerText = 'Account Created Successfully! Now login from Mobile App.';
+            } else {
+                msgDiv.className = 'error';
+                msgDiv.innerText = data.message || 'Registration failed!';
+            }
+            msgDiv.style.display = 'block';
+        } catch (err) {
+            msgDiv.className = 'error';
+            msgDiv.innerText = 'Error: ' + err.message;
+            msgDiv.style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>
