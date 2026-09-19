@@ -87,10 +87,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.pets,
-                    size: 80,
-                    color: Colors.orange,
+                  // Updated: Loaded local PNG image instead of default Icon
+                  Image.asset(
+                    'assets/icon/app_icon.png', // Apni exact image file ka naam set karein
+                    height: 100,
+                    width: 100,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.pets,
+                        size: 80,
+                        color: Colors.orange,
+                      );
+                    },
                   ),
                   const SizedBox(height: 20),
                   const Text(
