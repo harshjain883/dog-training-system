@@ -2,15 +2,14 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Backend package files copy aur dependencies install
-COPY backend/package*.json ./backend/
-RUN cd backend && npm ci --only=production
+# Entire repository copy karein
+COPY . .
 
-# Baaki backend code copy
-COPY backend/ ./backend/
-
+# Backend directory me jaakar install karein
 WORKDIR /app/backend
+RUN npm install
 
 EXPOSE 8080
 
 CMD ["npm", "start"]
+
